@@ -1,10 +1,17 @@
-// This is a mock implementation of the database module
-// In a real app, this would connect to MongoDB
+// Mock database implementation
+import { v4 as uuidv4 } from 'uuid';
+import { 
+  mockCriminals, 
+  mockUsers, 
+  updateMockCriminal,
+  addStatusChange,
+  addAuditLog,
+  getStatusHistory,
+  getAuditLogs,
+  getCasesByStatus
+} from './mockData';
 
-// Import mock data
-import { mockCriminals, mockUsers } from './mockData';
-
-// Create a mock Database class
+// Create a Database class with singleton pattern
 class Database {
   constructor() {
     if (Database.instance) {
@@ -17,14 +24,37 @@ class Database {
   }
 
   async connect() {
-    console.log('Mock database connection established');
-    this.isConnected = true;
-    return { connection: { host: 'mock-db-host' } };
+    try {
+      if (this.isConnected) {
+        console.log('Using existing database connection');
+        return this.connection;
+      }
+
+      // Simulate connection delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      this.isConnected = true;
+      this.connection = { isConnected: true };
+      
+      console.log('Mock database connection established successfully');
+      
+      return this.connection;
+    } catch (error) {
+      console.error('Database connection error:', error);
+      this.isConnected = false;
+      throw error;
+    }
   }
 
   async disconnect() {
-    console.log('Mock database disconnected');
-    this.isConnected = false;
+    try {
+      this.isConnected = false;
+      this.connection = null;
+      console.log('Mock database disconnected successfully');
+    } catch (error) {
+      console.error('Error disconnecting from database:', error);
+      throw error;
+    }
   }
 
   getConnectionStatus() {
@@ -32,7 +62,7 @@ class Database {
   }
 }
 
-// Create a singleton instance
+// Create singleton instance
 const dbInstance = new Database();
 
 // Mock models
@@ -49,12 +79,6 @@ const User = {
   aggregate: () => Promise.resolve([])
 };
 
-const Profile = {
-  find: () => Promise.resolve([]),
-  findById: () => Promise.resolve(null),
-  findOne: () => Promise.resolve(null)
-};
-
 const Criminal = {
   find: () => Promise.resolve(mockCriminals),
   findById: (id) => Promise.resolve(mockCriminals.find(criminal => criminal._id === id)),
@@ -63,72 +87,181 @@ const Criminal = {
   aggregate: () => Promise.resolve([])
 };
 
-// Mock database operations
+// Database operations
 const dbOperations = {
   connect: () => dbInstance.connect(),
   
   async create(model, data) {
-    console.log('Mock create operation', model, data);
-    return { ...data, _id: Math.random().toString(36).substring(7) };
+    try {
+      const newId = uuidv4();
+      const newDoc = { 
+        _id: newId,
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      if (model === User) {
+        mockUsers.push(newDoc);
+      } else if (model === Criminal) {
+        mockCriminals.push(newDoc);
+      }
+
+      return newDoc;
+    } catch (error) {
+      console.error(`Error creating document:`, error);
+      throw error;
+    }
   },
 
   async find(model, query = {}, options = {}) {
-    console.log('Mock find operation', model, query);
-    if (model === Criminal) {
-      return mockCriminals;
+    try {
+      let results = model === User ? [...mockUsers] : [...mockCriminals];
+      
+      // Apply query filters
+      if (Object.keys(query).length > 0) {
+        results = results.filter(doc => 
+          Object.entries(query).every(([key, value]) => doc[key] === value)
+        );
+      }
+      
+      // Apply sorting
+      if (options.sort) {
+        const [sortField, sortOrder] = Object.entries(options.sort)[0];
+        results.sort((a, b) => {
+          if (sortOrder === -1) {
+            return b[sortField] > a[sortField] ? 1 : -1;
+          }
+          return a[sortField] > b[sortField] ? 1 : -1;
+        });
+      }
+      
+      // Apply pagination
+      if (options.skip) {
+        results = results.slice(options.skip);
+      }
+      if (options.limit) {
+        results = results.slice(0, options.limit);
+      }
+      
+      return results;
+    } catch (error) {
+      console.error(`Error finding documents:`, error);
+      throw error;
     }
-    return [];
   },
 
   async findById(model, id, projection = {}) {
-    console.log('Mock findById operation', model, id);
-    if (model === Criminal) {
-      return mockCriminals.find(criminal => criminal._id === id);
+    try {
+      const doc = model === User 
+        ? mockUsers.find(u => u._id === id)
+        : mockCriminals.find(c => c._id === id);
+        
+      if (!doc) return null;
+      
+      // Apply projection
+      if (Object.keys(projection).length > 0) {
+        return Object.fromEntries(
+          Object.entries(doc).filter(([key]) => projection[key])
+        );
+      }
+      
+      return doc;
+    } catch (error) {
+      console.error(`Error finding document by ID:`, error);
+      throw error;
     }
-    return null;
   },
 
   async findOne(model, query, projection = {}) {
-    console.log('Mock findOne operation', model, query);
-    if (model === User && query.email) {
-      return mockUsers.find(user => user.email === query.email);
+    try {
+      const doc = model === User 
+        ? mockUsers.find(u => 
+            Object.entries(query).every(([key, value]) => u[key] === value)
+          )
+        : mockCriminals.find(c => 
+            Object.entries(query).every(([key, value]) => c[key] === value)
+          );
+        
+      if (!doc) return null;
+      
+      // Apply projection
+      if (Object.keys(projection).length > 0) {
+        return Object.fromEntries(
+          Object.entries(doc).filter(([key]) => projection[key])
+        );
+      }
+      
+      return doc;
+    } catch (error) {
+      console.error(`Error finding one document:`, error);
+      throw error;
     }
-    return null;
   },
 
-  async updateById(model, id, data, options = {}) {
-    console.log('Mock updateById operation', model, id, data);
-    return { _id: id, ...data };
-  },
-
-  async updateMany(model, query, data, options = {}) {
-    console.log('Mock updateMany operation', model, query, data);
-    return { modifiedCount: 1 };
+  async updateById(model, id, data) {
+    try {
+      const index = model === User 
+        ? mockUsers.findIndex(u => u._id === id)
+        : mockCriminals.findIndex(c => c._id === id);
+        
+      if (index === -1) return null;
+      
+      const updatedDoc = {
+        ...model === User ? mockUsers[index] : mockCriminals[index],
+        ...data,
+        updatedAt: new Date()
+      };
+      
+      if (model === User) {
+        mockUsers[index] = updatedDoc;
+      } else {
+        mockCriminals[index] = updatedDoc;
+      }
+      
+      return updatedDoc;
+    } catch (error) {
+      console.error(`Error updating document:`, error);
+      throw error;
+    }
   },
 
   async deleteById(model, id) {
-    console.log('Mock deleteById operation', model, id);
-    return { _id: id };
-  },
-
-  async deleteMany(model, query) {
-    console.log('Mock deleteMany operation', model, query);
-    return { deletedCount: 1 };
+    try {
+      if (model === User) {
+        const index = mockUsers.findIndex(u => u._id === id);
+        if (index === -1) return null;
+        return mockUsers.splice(index, 1)[0];
+      } else {
+        const index = mockCriminals.findIndex(c => c._id === id);
+        if (index === -1) return null;
+        return mockCriminals.splice(index, 1)[0];
+      }
+    } catch (error) {
+      console.error(`Error deleting document:`, error);
+      throw error;
+    }
   },
 
   async count(model, query = {}) {
-    console.log('Mock count operation', model, query);
-    if (model === Criminal) {
-      if (query['warrants.isActive'] === true) {
-        return 60; // Active warrants count
+    try {
+      const docs = model === User ? mockUsers : mockCriminals;
+      
+      if (Object.keys(query).length === 0) {
+        return docs.length;
       }
-      return 83; // Total cases count
+      
+      return docs.filter(doc => 
+        Object.entries(query).every(([key, value]) => doc[key] === value)
+      ).length;
+    } catch (error) {
+      console.error(`Error counting documents:`, error);
+      throw error;
     }
-    return 0;
   },
 
   async aggregate(model, pipeline) {
-    console.log('Mock aggregate operation', model, pipeline);
+    // For simplicity, we'll just return an empty array for aggregations
     return [];
   }
 };
@@ -137,7 +270,6 @@ const dbOperations = {
 export {
   dbInstance,
   User,
-  Profile,
   Criminal,
   dbOperations
 };
@@ -149,7 +281,6 @@ export default {
   getConnectionStatus: dbInstance.getConnectionStatus.bind(dbInstance),
   models: {
     User,
-    Profile,
     Criminal
   },
   operations: dbOperations

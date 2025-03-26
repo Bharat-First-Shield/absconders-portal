@@ -1,30 +1,17 @@
 import { jwtDecode } from 'jwt-decode';
-import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
-import { mockUsers } from '../utils/mockData';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
-}
-
-export interface RegisterData {
-  name?: string;
-  username?: string;
-  firstName?: string;
-  lastName?: string;
-  email: string;
-  password: string;
-  policeStation?: string;
-  role?: 'admin' | 'investigator' | 'public';
-  district?: string;
-  state?: string;
 }
 
 export interface LoginResponse {
-  _id: string;
+  id: string;
+  username: string;
   name: string;
-  email: string;
   role: string;
   district?: string;
   state?: string;
@@ -32,86 +19,18 @@ export interface LoginResponse {
   token: string;
 }
 
-// Generate JWT token (in a real app, this would use a proper JWT library)
-const generateToken = (userId: string, role: string): string => {
-  return `jwt-token-${userId}-${role}-${Date.now()}`;
-};
-
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
   try {
-    // Find user by email
-    const user = mockUsers.find(u => u.email === credentials.email);
-    
-    if (!user) {
-      throw new Error('Invalid email or password');
-    }
-    
-    // In a real app, we would compare hashed passwords
-    // For demo purposes, we'll accept any password
-    
-    // Generate token
-    const token = generateToken(user._id.toString(), user.role);
-    
-    return {
-      _id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      district: user.district,
-      state: user.state,
-      policeStation: user.policeStation,
-      token
-    };
+    const response = await axios.post(`${API_URL}/auth/login`, credentials);
+    const { token, user } = response.data;
+    setAuthToken(token);
+    return { ...user, token };
   } catch (error) {
-    console.error('Login error:', error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || 'Login failed');
+    }
     throw error;
   }
-}
-
-export async function register(userData: RegisterData): Promise<LoginResponse> {
-  try {
-    // Validate required fields
-    if (!userData.email || !userData.password) {
-      throw new Error('Email and password are required');
-    }
-
-    // Prepare name if firstName and lastName are provided
-    let name = userData.name;
-    if (!name && userData.firstName && userData.lastName) {
-      name = `${userData.firstName} ${userData.lastName}`;
-    }
-
-    // Check if user already exists
-    const existingUser = mockUsers.find(u => u.email === userData.email);
-    
-    if (existingUser) {
-      throw new Error('Email already in use');
-    }
-    
-    // Generate a new user ID
-    const newUserId = uuidv4();
-    
-    // Generate token
-    const token = generateToken(newUserId, userData.role || 'public');
-    
-    return {
-      _id: newUserId,
-      name: name || userData.email.split('@')[0],
-      email: userData.email,
-      role: userData.role || 'public',
-      district: userData.district,
-      state: userData.state,
-      policeStation: userData.policeStation,
-      token
-    };
-  } catch (error) {
-    console.error('Registration error:', error);
-    throw error;
-  }
-}
-
-export function getUsernameFromEmail(email: string): string {
-  return email.split('@')[0];
 }
 
 export function getAuthToken(): string | null {
@@ -120,10 +39,12 @@ export function getAuthToken(): string | null {
 
 export function setAuthToken(token: string): void {
   localStorage.setItem('token', token);
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
 
 export function removeAuthToken(): void {
   localStorage.removeItem('token');
+  delete axios.defaults.headers.common['Authorization'];
 }
 
 export function isAuthenticated(): boolean {

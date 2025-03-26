@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { motion } from 'framer-motion';
@@ -12,7 +12,7 @@ export function Login() {
   const { login } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const [credentials, setCredentials] = useState<LoginCredentials>({
-    email: '',
+    username: '',
     password: ''
   });
   const [error, setError] = useState<string | null>(null);
@@ -31,8 +31,8 @@ export function Login() {
 
     try {
       // Validate inputs
-      if (!credentials.email || !credentials.password) {
-        setError('Email and password are required');
+      if (!credentials.username || !credentials.password) {
+        setError('Username and password are required');
         setIsLoading(false);
         return;
       }
@@ -91,17 +91,17 @@ export function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Username
             </label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={credentials.email}
+              type="text"
+              id="username"
+              name="username"
+              value={credentials.username}
               onChange={handleChange}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-              placeholder="Enter your email"
+              placeholder="Enter your username"
               required
               disabled={isLoading}
             />
@@ -131,16 +131,6 @@ export function Login() {
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </motion.button>
-          
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{' '}
-            <Link
-              to="/signup"
-              className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-            >
-              Sign up
-            </Link>
-          </p>
         </form>
       </motion.div>
     </div>

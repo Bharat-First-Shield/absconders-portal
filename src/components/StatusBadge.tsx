@@ -24,12 +24,12 @@ export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
   const getSizeStyles = () => {
     switch (size) {
       case 'sm':
-        return 'w-2 h-2';
+        return 'px-2 py-0.5 text-xs';
       case 'lg':
-        return 'w-3 h-3';
+        return 'px-3 py-1.5 text-sm';
       case 'md':
       default:
-        return 'w-2.5 h-2.5';
+        return 'px-2.5 py-1 text-xs';
     }
   };
 
@@ -38,13 +38,14 @@ export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.2 }}
-      className={`rounded-full border ${getStatusStyles()} inline-flex items-center justify-center`}
+      className={`rounded-full font-medium border ${getStatusStyles()} ${getSizeStyles()} inline-flex items-center justify-center whitespace-nowrap max-w-full overflow-hidden text-ellipsis`}
     >
-      <span className={`${getSizeStyles()} rounded-full flex-shrink-0 ${
+      <span className={`w-1.5 h-1.5 rounded-full mr-1 flex-shrink-0 ${
         status === 'active' ? 'bg-red-500 dark:bg-red-400' : 
         status === 'arrested' ? 'bg-green-500 dark:bg-green-400' : 
         'bg-gray-500 dark:bg-gray-400'
       }`}></span>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
     </motion.span>
   );
 }

@@ -73,7 +73,7 @@ export function CaseStatusSelector({
             >
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-gray-900 dark:text-white">{option.label}</span>
+                  <h3 className="font-medium text-gray-900 dark:text-white">{option.label}</h3>
                   <StatusBadge status={option.value} />
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">

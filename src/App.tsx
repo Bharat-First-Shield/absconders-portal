@@ -6,7 +6,6 @@ import { Layout } from './components/Layout';
 import { Toaster } from 'react-hot-toast';
 import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
-import { Signup } from './pages/Signup';
 import { CaseList } from './pages/CaseList';
 import { CaseForm } from './pages/CaseForm';
 import { Analytics } from './pages/Analytics';
@@ -79,7 +78,6 @@ function App() {
               <AnimatePresence mode="wait">
                 <Routes>
                   <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
                   <Route
                     path="/"
                     element={

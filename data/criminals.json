@@ -1,0 +1,39 @@
+[
+  {
+    "id": "e5e1d81f-e674-4a97-a0da-6b422930db87",
+    "name": "Vishvam Joshi",
+    "age": 45,
+    "gender": "male",
+    "fatherName": "sdfsdf",
+    "address": "sdfsdf",
+    "firNumber": "sdfsdf",
+    "idProof": {
+      "type": "aadhar",
+      "number": "sdfsdf"
+    },
+    "identifiableMarks": [
+      "sdfsdf"
+    ],
+    "state": "sdfsdf",
+    "district": "sdfsf",
+    "policeStation": [
+      "",
+      ""
+    ],
+    "warrants": [
+      {
+        "id": "2c387cca-98f6-44d1-a487-2b1eacdf80cf",
+        "details": "sdfsd",
+        "court": "sdfsf",
+        "caseNumber": "dfsdf",
+        "issuedDate": "2025-05-01T07:30:53.520Z",
+        "isActive": true
+      }
+    ],
+    "images": [],
+    "documents": [],
+    "status": "active",
+    "createdAt": "2025-05-01T07:30:53.520Z",
+    "updatedAt": "2025-05-01T07:30:53.520Z"
+  }
+]

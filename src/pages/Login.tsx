@@ -12,16 +12,40 @@ export function Login() {
   const { login } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const [credentials, setCredentials] = useState<LoginCredentials>({
-    username: '',
-    password: ''
+    identifier: '',
+    password: '',
+    state: '',
+    district: ''
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Mock data for dropdowns - in a real app, this would come from an API
+  const states = [
+    'Maharashtra',
+    'Gujarat',
+    'Rajasthan',
+    'Karnataka',
+    'Tamil Nadu'
+  ];
+
+  const districts = {
+    Maharashtra: ['Mumbai', 'Pune', 'Nagpur', 'Thane', 'Nashik'],
+    Gujarat: ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Gandhinagar'],
+    Rajasthan: ['Jaipur', 'Jodhpur', 'Udaipur', 'Kota', 'Ajmer'],
+    Karnataka: ['Bangalore', 'Mysore', 'Hubli', 'Mangalore', 'Belgaum'],
+    'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Salem', 'Trichy']
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setCredentials(prev => ({ ...prev, [name]: value }));
-    setError(null); // Clear error when user types
+    setError(null);
+
+    // Reset district when state changes
+    if (name === 'state') {
+      setCredentials(prev => ({ ...prev, state: value, district: '' }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,11 +54,12 @@ export function Login() {
     setError(null);
 
     try {
-      // Validate inputs
-      if (!credentials.username || !credentials.password) {
-        setError('Username and password are required');
-        setIsLoading(false);
-        return;
+      if (!credentials.identifier || !credentials.password) {
+        throw new Error('Username/Email and password are required');
+      }
+
+      if (!credentials.state || !credentials.district) {
+        throw new Error('State and District are required');
       }
 
       const response = await loginService(credentials);
@@ -91,21 +116,62 @@ export function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Username
+            <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Username or Email
             </label>
             <input
               type="text"
-              id="username"
-              name="username"
-              value={credentials.username}
+              id="identifier"
+              name="identifier"
+              value={credentials.identifier}
               onChange={handleChange}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-              placeholder="Enter your username"
+              placeholder="Enter your username or email"
               required
               disabled={isLoading}
             />
           </div>
+
+          <div>
+            <label htmlFor="state" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              State
+            </label>
+            <select
+              id="state"
+              name="state"
+              value={credentials.state}
+              onChange={handleChange}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+              required
+              disabled={isLoading}
+            >
+              <option value="">Select State</option>
+              {states.map(state => (
+                <option key={state} value={state}>{state}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="district" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              District
+            </label>
+            <select
+              id="district"
+              name="district"
+              value={credentials.district}
+              onChange={handleChange}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+              required
+              disabled={isLoading || !credentials.state}
+            >
+              <option value="">Select District</option>
+              {credentials.state && districts[credentials.state as keyof typeof districts].map(district => (
+                <option key={district} value={district}>{district}</option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Password
@@ -122,12 +188,13 @@ export function Login() {
               disabled={isLoading}
             />
           </div>
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full py-2 px-4 rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed mt-6"
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </motion.button>

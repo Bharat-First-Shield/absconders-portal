@@ -31,11 +31,14 @@ export function CaseList() {
     }
   }, [location.search]);
 
-  const { data: criminals, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['criminals', filters],
     queryFn: () => searchCriminals(filters),
     enabled: true
   });
+
+  // Ensure data is an array
+  const criminals = Array.isArray(data) ? data : [];
 
   useEffect(() => {
     if (error) {
@@ -140,7 +143,7 @@ export function CaseList() {
           <div className="text-center py-12 text-red-500">
             Error loading data. Please try again.
           </div>
-        ) : criminals && criminals.length > 0 ? (
+        ) : criminals.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>

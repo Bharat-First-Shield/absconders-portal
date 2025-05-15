@@ -4,13 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { Users, FileText, Search, BarChart3, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardStats, getRecentActivities, getDistrictOverview, getCaseStatistics } from '../services/mongodb';
+import { getUsernameFromEmail } from '../services/auth';
 import toast from 'react-hot-toast';
 import { StatusBadge } from '../components/StatusBadge';
 import { Link } from 'react-router-dom';
 
 export function Dashboard() {
   const { user } = useAuth();
-  const username = user?.username || user?.name || 'User';
+  const username = user?.email ? getUsernameFromEmail(user.email) : user?.name || 'User';
 
   const { data: stats, isLoading, error: statsError } = useQuery({
     queryKey: ['dashboardStats'],

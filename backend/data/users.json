@@ -1,0 +1,25 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "username": "admin",
+      "email": "admin@example.com",
+      "password": "$2a$10$X7aPHQh3Y5rMO1NYY9GFQeVWJg2hqIxGqZU1VsH5wY3NaSXJcQCFa",
+      "role": "admin",
+      "name": "Admin User",
+      "state": "Maharashtra",
+      "district": "Mumbai"
+    },
+    {
+      "id": "2", 
+      "username": "investigator",
+      "email": "investigator@example.com",
+      "password": "$2a$10$X7aPHQh3Y5rMO1NYY9GFQeVWJg2hqIxGqZU1VsH5wY3NaSXJcQCFa",
+      "role": "investigator",
+      "name": "Investigator User",
+      "district": "Mumbai",
+      "state": "Maharashtra",
+      "policeStation": "Central"
+    }
+  ]
+}

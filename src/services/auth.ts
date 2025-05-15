@@ -1,34 +1,117 @@
+import api from './api';
 import { jwtDecode } from 'jwt-decode';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export interface LoginCredentials {
-  username: string;
+  identifier: string;
   password: string;
+  state?: string;
+  district?: string;
 }
 
 export interface LoginResponse {
-  id: string;
-  username: string;
-  name: string;
-  role: string;
-  district?: string;
-  state?: string;
-  policeStation?: string;
   token: string;
 }
 
-export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
+export interface RegistrationData {
+  name: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: 'admin' | 'investigator' | 'public';
+  policeStation?: string;
+  district?: string;
+  state?: string;
+}
+
+export async function register(data: RegistrationData): Promise<LoginResponse> {
   try {
-    const response = await axios.post(`${API_URL}/auth/login`, credentials);
-    const { token, user } = response.data;
-    setAuthToken(token);
-    return { ...user, token };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.message || 'Login failed');
+    // In a real app, this would be an API call
+    // For now, we'll simulate registration using mock data
+    const mockUsers = [
+      {
+        id: '1',
+        username: 'admin',
+        email: 'admin@example.com',
+        password: 'admin123',
+        state: 'Maharashtra',
+        district: 'Mumbai',
+        role: 'admin',
+        name: 'Admin User'
+      }
+    ];
+
+    // Check if username or email already exists
+    const userExists = mockUsers.some(u => 
+      u.username === data.username || u.email === data.email
+    );
+
+    if (userExists) {
+      throw new Error('Username or email already exists');
     }
+
+    // Create a mock token for the new user
+    const token = `jwt-token-${Date.now()}-${data.role}`;
+    
+    // Store token
+    localStorage.setItem('token', token);
+    
+    return { token };
+  } catch (error) {
+    console.error('Registration error:', error);
+    throw error;
+  }
+}
+
+export async function login(credentials: LoginCredentials): Promise<any> {
+  try {
+    // In a real app, this would be an API call
+    // For now, we'll simulate authentication using the mock data
+    const mockUsers = [
+      {
+        id: '1',
+        username: 'admin',
+        email: 'admin@example.com',
+        password: 'admin123',
+        state: 'Maharashtra',
+        district: 'Mumbai',
+        role: 'admin',
+        name: 'Admin User'
+      },
+      {
+        id: '2',
+        username: 'investigator',
+        email: 'investigator@example.com',
+        password: 'investigator123',
+        state: 'Maharashtra',
+        district: 'Pune',
+        role: 'investigator',
+        name: 'Investigator User'
+      }
+    ];
+
+    // Check if user exists
+    const user = mockUsers.find(u => 
+      (u.username === credentials.identifier || u.email === credentials.identifier) &&
+      u.password === credentials.password &&
+      u.state === credentials.state &&
+      u.district === credentials.district
+    );
+
+    if (!user) {
+      throw new Error('Invalid credentials or location');
+    }
+
+    // Create a mock token
+    const token = `jwt-token-${user.id}-${user.role}-${Date.now()}`;
+    
+    // Store token
+    localStorage.setItem('token', token);
+    
+    return { token };
+  } catch (error) {
+    console.error('Login error:', error);
     throw error;
   }
 }
@@ -39,14 +122,16 @@ export function getAuthToken(): string | null {
 
 export function setAuthToken(token: string): void {
   localStorage.setItem('token', token);
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
 
 export function removeAuthToken(): void {
   localStorage.removeItem('token');
-  delete axios.defaults.headers.common['Authorization'];
 }
 
 export function isAuthenticated(): boolean {
   return !!getAuthToken();
+}
+
+export function getUsernameFromEmail(email: string): string {
+  return email.split('@')[0];
 }
